@@ -14,6 +14,7 @@ using System.Linq.Dynamic.Core;
 using Newtonsoft.Json;
 using WebBaseApi.Filters;
 using WebBaseApi.Common;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace WebBaseApi.Controllers
 {
@@ -158,6 +159,35 @@ namespace WebBaseApi.Controllers
             dbContext.Users.Update(user);
             await dbContext.SaveChangesAsync();
 
+            return new NoContentResult();
+        }
+
+        /// <summary>
+        /// 更新用户信息
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        [HttpPatch("{id}")]
+        [ValidateModel]
+        [ProducesResponseType(typeof(void), 204)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(ValidationError), 422)]
+        [ProducesResponseType(typeof(void), 500)]
+        public  IActionResult PatchUser(int id,[FromBody] JsonPatchDocument<User> input)
+        {
+            if (input == null)
+            {
+                return BadRequest(Json(new { Error = "请求参数错误" }));
+            }
+
+            var user = dbContext.Users.FirstOrDefault(u => u.Id == id);
+            if (user == null)
+            {
+                return NotFound(Json(new { Error = "该用户不存在" }));
+            }
+            input.ApplyTo(user);
             return new NoContentResult();
         }
 

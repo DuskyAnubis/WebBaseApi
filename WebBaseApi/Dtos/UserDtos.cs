@@ -66,4 +66,21 @@ namespace WebBaseApi.Dtos
         public int RoleId { get; set; }
         public string Status { get; set; }
     }
+
+    public class UserPatchInput
+    {
+        [Required(ErrorMessage = "请输入用户名")]
+        [StringLength(14, MinimumLength = 4, ErrorMessage = "用户名必须为4到14位")]
+        public string Name { get; set; }
+        [Required(ErrorMessage = "请输入密码")]
+        [MinLength(6, ErrorMessage = "密码长度不能少于6位")]
+        public string PassWord { get; set; }
+        [RegularExpression("^[1-9]\\d*$", ErrorMessage = "组织机构ID为正整数")]
+        [Existence("Organazitions", "Id", ErrorMessage = "不存在该组织机构")]
+        public int OrganazitionId { get; set; }
+        [RegularExpression("^[1-9]\\d*$", ErrorMessage = "角色ID为正整数")]
+        [Existence("Roles", "Id", ErrorMessage = "不存在该角色")]
+        public int RoleId { get; set; }
+        public string Status { get; set; }
+    }
 }
