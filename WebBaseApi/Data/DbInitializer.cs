@@ -47,7 +47,7 @@ namespace WebBaseApi.Data
             permissions.ForEach(power => context.Add(power));
             context.SaveChanges();
 
-            var rolePowers = new List<RolePermission>
+            var rolePermissions = new List<RolePermission>
             {
                 new RolePermission{ RoleId=1,PermissionId=2},
                 new RolePermission{ RoleId=1,PermissionId=3},
@@ -56,7 +56,7 @@ namespace WebBaseApi.Data
                 new RolePermission{ RoleId=1,PermissionId=6},
                 new RolePermission{ RoleId=1,PermissionId=7}
             };
-            rolePowers.ForEach(rolePower => context.Add(rolePower));
+            rolePermissions.ForEach(rolePermission => context.Add(rolePermission));
             context.SaveChanges();
 
             var users = new List<User>

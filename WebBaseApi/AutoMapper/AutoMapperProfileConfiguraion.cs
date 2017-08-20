@@ -22,8 +22,11 @@ namespace WebBaseApi.AutoMapper
             CreateMap<User, UserOutput>();
             CreateMap<UserCreateInput, User>()
                 .ForMember(user => user.PassWord, option => option.MapFrom(input => Encrypt.Md5Encrypt(input.PassWord)));
+            CreateMap<User, UserUpdateInput>();
+
             CreateMap<Role, RoleOutput>();
             CreateMap<RoleCreateInput, Role>();
+            CreateMap<Role, RoleUpdateInput>();
         }
     }
 }

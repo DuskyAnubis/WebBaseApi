@@ -14,7 +14,6 @@ namespace WebBaseApi.Dtos
 
     public class RoleQueryInput : IPageAndSortInputDto
     {
-        public int Id { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
         public string Status { get; set; }
@@ -23,7 +22,6 @@ namespace WebBaseApi.Dtos
     public class RoleCreateInput
     {
         [Required(ErrorMessage = "请输入角色编码")]
-        [Unique("Roles", "Code", ErrorMessage = "该角色编码已存在")]
         public string Code { get; set; }
         [Required(ErrorMessage = "请输入角色名称")]
         public string Name { get; set; }

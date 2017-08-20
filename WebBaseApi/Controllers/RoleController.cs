@@ -13,12 +13,13 @@ using Microsoft.AspNetCore.Authorization;
 using System.Linq.Dynamic.Core;
 using Newtonsoft.Json;
 using WebBaseApi.Filters;
-using WebBaseApi.Common;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace WebBaseApi.Controllers
 {
     [Produces("application/json")]
     [Route("api/v1/Roles")]
+    [Authorize]
     public class RoleController : Controller
     {
         private readonly ApiContext dbContext;
@@ -30,7 +31,7 @@ namespace WebBaseApi.Controllers
             this.mapper = mapper;
         }
 
-
+        #region 角色基本操作
         /// <summary>
         /// 获取角色列表
         /// </summary>
@@ -41,21 +42,19 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IEnumerable<RoleOutput>> GetRoles(RoleQueryInput input)
         {
-            int pageIndex = input.PageIndex;
-            int pageSize = input.PageSize == 0 ? 10 : input.PageSize;
-            pageSize = pageSize > 500 ? 500 : pageSize;
-            string sortBy = string.IsNullOrEmpty(input.SortBy) ? "Id" : input.SortBy;
+            int pageIndex = input.Page - 1;
+            int Per_Page = input.Per_Page;
+            string sortBy = input.SortBy;
 
             IQueryable<Role> query = dbContext.Roles.AsQueryable<Role>();
 
-            query = query.Where(q => input.Id == 0 || q.Id == input.Id);
             query = query.Where(q => string.IsNullOrEmpty(input.Code) || q.Code.Contains(input.Code));
             query = query.Where(q => string.IsNullOrEmpty(input.Name) || q.Name.Contains(input.Name));
             query = query.Where(q => string.IsNullOrEmpty(input.Status) || q.Status.Contains(input.Status));
             query = query.OrderBy(sortBy);
 
             var totalCount = query.Count();
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            var totalPages = (int)Math.Ceiling((double)totalCount / Per_Page);
 
             var paginationHeader = new
             {
@@ -65,7 +64,7 @@ namespace WebBaseApi.Controllers
 
             HttpContext.Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationHeader));
 
-            //query = query.Skip(pageIndex * pageSize).Take(pageSize);
+            query = query.Skip(pageIndex * Per_Page).Take(Per_Page);
 
             List<Role> roles = await query.ToListAsync();
             List<RoleOutput> list = mapper.Map<List<RoleOutput>>(roles);
@@ -102,7 +101,7 @@ namespace WebBaseApi.Controllers
         [HttpPost]
         [ValidateModel]
         [ProducesResponseType(typeof(UserOutput), 201)]
-        [ProducesResponseType(typeof(IDictionary<string, string>), 422)]
+        [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IActionResult> CreateRole([FromBody] RoleCreateInput input)
         {
@@ -111,7 +110,7 @@ namespace WebBaseApi.Controllers
             dbContext.Roles.Add(role);
             await dbContext.SaveChangesAsync();
 
-            return CreatedAtRoute("GetRole", new { id = role.Id }, role);
+            return CreatedAtRoute("GetRole", new { id = role.Id }, mapper.Map<RoleOutput>(role));
         }
 
         /// <summary>
@@ -134,7 +133,7 @@ namespace WebBaseApi.Controllers
                 return BadRequest(Json(new { Error = "请求参数错误" }));
             }
 
-            var role = dbContext.Roles.FirstOrDefault(r => r.Id == id);
+            var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id);
             if (role == null)
             {
                 return NotFound(Json(new { Error = "该角色不存在" }));
@@ -151,6 +150,56 @@ namespace WebBaseApi.Controllers
             return new NoContentResult();
         }
 
+        /// <summary>
+        /// 更新角色
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="patchDoc"></param>
+        /// <returns></returns>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(typeof(void), 201)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(ValidationError), 422)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> PatchRole(int id, [FromBody]JsonPatchDocument patchDoc)
+        {
+            if (patchDoc == null)
+            {
+                return BadRequest(Json(new { Error = "请求参数错误" }));
+            }
+
+            var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id);
+            if (role == null)
+            {
+                return NotFound(Json(new { Error = "该角色不存在" }));
+            }
+
+            var input = mapper.Map<RoleUpdateInput>(role);
+            patchDoc.ApplyTo(input);
+
+            TryValidateModel(input);
+            if (!ModelState.IsValid)
+            {
+                return new ValidationFailedResult(ModelState);
+            }
+
+            role.Code = input.Code;
+            role.Name = input.Name;
+            role.Description = input.Description;
+            role.Status = input.Status;
+
+            dbContext.Roles.Update(role);
+            await dbContext.SaveChangesAsync();
+
+            return CreatedAtRoute("GetRole", new { id = role.Id }, mapper.Map<RoleOutput>(role));
+        }
+
+        /// <summary>
+        /// 删除角色
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
         [ProducesResponseType(typeof(void), 204)]
         [ProducesResponseType(typeof(void), 400)]
@@ -158,17 +207,17 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IActionResult> DeleteRole(int id)
         {
-            var role = dbContext.Roles.FirstOrDefault(r => r.Id == id);
+            var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id);
             if (role == null)
             {
                 return NotFound(Json(new { Error = "该角色不存在" }));
             }
 
-            int userCount = dbContext.Users.Count(u => u.RoleId == id);
-            int rolePowerCount = dbContext.RolePowers.Count(rp => rp.RoleId == id);
+            int userCount = await dbContext.Users.CountAsync(u => u.RoleId == id);
+            int rolePowerCount = await dbContext.RolePermissions.CountAsync(rp => rp.RoleId == id);
             if (userCount != 0 || rolePowerCount != 0)
             {
-                return BadRequest(Json(new { Error = "该角色存在外键引用，不可删除" }));
+                return BadRequest(Json(new { Error = "该角色存在引用，不可删除" }));
             }
 
             dbContext.Roles.Remove(role);
@@ -176,5 +225,49 @@ namespace WebBaseApi.Controllers
 
             return new NoContentResult();
         }
+
+        /// <summary>
+        /// 批量删除
+        /// </summary>
+        /// <param name="ids"></param>
+        /// <returns></returns>
+        [HttpDelete]
+        [ProducesResponseType(typeof(void), 204)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> BatchDelete([FromBody] int[] ids)
+        {
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == ids[i]);
+                if (role == null)
+                {
+                    dbContext.Roles.Remove(role);
+                }
+            }
+            await dbContext.SaveChangesAsync();
+
+            return new NoContentResult();
+        }
+        #endregion
+
+        #region 角色-权限操作
+        /// <summary>
+        /// 角色拥有权限
+        /// </summary>
+        /// <param name="roleId"></param>
+        /// <returns></returns>
+        [HttpGet("{roleId}/Permissions")]
+        [ProducesResponseType(typeof(int[]), 200)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<int[]> GetRolePermissions(int roleId)
+        {
+            var list = await dbContext.RolePermissions.Where(r => r.Id == roleId).ToListAsync();
+            int[] permissions = new int[] { };
+            list.ForEach(perms => permissions.Append(perms.PermissionId));
+
+            return permissions;
+        }
+        #endregion
+
     }
 }

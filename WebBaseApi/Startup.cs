@@ -21,6 +21,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
+using System.Security;
 
 namespace WebBaseApi
 {
@@ -116,11 +117,6 @@ namespace WebBaseApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ApiContext context)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
@@ -136,8 +132,6 @@ namespace WebBaseApi
 
             //注入ApiContext
             DbInitializer.Initialize(context);
-            UniqueAttribute.Initialize(context);
-            ExistenceAttribute.Initialize(context);
         }
     }
 }
