@@ -14,7 +14,7 @@ namespace WebBaseApi.Models
         public string Status { get; set; }
 
         public ICollection<User> User { get; set; }
-        public ICollection<RolePermission> RolePower { get; set; }
+        public ICollection<RolePermission> RolePermission { get; set; }
 
     }
 }

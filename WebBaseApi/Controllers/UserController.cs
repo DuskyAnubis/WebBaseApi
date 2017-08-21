@@ -274,7 +274,52 @@ namespace WebBaseApi.Controllers
 
             return new NoContentResult();
         }
+        #endregion
 
+        #region 部门-用户操作
+        /// <summary>
+        /// 部门-用户列表
+        /// </summary>
+        /// <param name="orgId"></param>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        [HttpGet("~/api/v1/Orgs/{orgId}/Users")]
+        [ProducesResponseType(typeof(List<UserOutput>), 200)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IEnumerable<UserOutput>> GetOrgUsers(int orgId, UserQueryInput input)
+        {
+            int pageIndex = input.Page - 1;
+            int Per_Page = input.Per_Page;
+            string sortBy = input.SortBy;
+
+            IQueryable<User> query = dbContext.Users
+                 .Include(q => q.Organazition)
+                 .Include(q => q.Role)
+                 .AsQueryable<User>();
+
+            query = query.Where(q => q.OrganazitionId == orgId);
+            query = query.Where(q => string.IsNullOrEmpty(input.Name) || q.Name.Contains(input.Name));
+            query = query.Where(q => string.IsNullOrEmpty(input.Status) || q.Status.Contains(input.Status));
+            query = query.OrderBy(sortBy);
+
+            var totalCount = query.Count();
+            var totalPages = (int)Math.Ceiling((double)totalCount / Per_Page);
+
+            var paginationHeader = new
+            {
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            };
+
+            HttpContext.Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationHeader));
+
+            query = query.Skip(pageIndex * Per_Page).Take(Per_Page);
+
+            List<User> users = await query.ToListAsync();
+            List<UserOutput> list = mapper.Map<List<UserOutput>>(users);
+
+            return list;
+        }
+        #endregion
     }
-    #endregion
 }

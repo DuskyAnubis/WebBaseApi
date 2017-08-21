@@ -15,7 +15,6 @@ using WebBaseApi.AutoMapper;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.PlatformAbstractions;
 using System.IO;
-using WebBaseApi.Filters;
 using WebBaseApi.Common;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;

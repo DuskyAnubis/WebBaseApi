@@ -36,9 +36,10 @@ namespace WebBaseApi.Controllers
 
             var claims = new List<Claim>
             {
+                new Claim(JwtRegisteredClaimNames.Jti,jti),
                 new Claim("userId",user.Id.ToString()),
-                new Claim("role",user.Role.Name),
-                new Claim(JwtRegisteredClaimNames.Jti,jti)
+                new Claim("role",user.Role.Name)
+
             };
             ClaimsIdentity identity = new ClaimsIdentity(new GenericIdentity(user.Name, "TokenAuth"), claims);
 
@@ -63,7 +64,6 @@ namespace WebBaseApi.Controllers
         {
             var user = dbContext.Users
                 .Include(u => u.Role)
-                .Include(u => u.Organazition)
                 .FirstOrDefault(u => u.Name == loginUser.UserName && u.PassWord == Encrypt.Md5Encrypt(loginUser.PassWord));
 
             if (user == null)

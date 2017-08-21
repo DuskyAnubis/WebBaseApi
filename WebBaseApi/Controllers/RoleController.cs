@@ -252,18 +252,18 @@ namespace WebBaseApi.Controllers
 
         #region 角色-权限操作
         /// <summary>
-        /// 角色拥有权限
+        /// 角色-权限列表
         /// </summary>
         /// <param name="roleId"></param>
         /// <returns></returns>
-        [HttpGet("{roleId}/Permissions")]
+        [HttpGet("~/api/v1/Role/{roleId}/Permissions")]
         [ProducesResponseType(typeof(int[]), 200)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<int[]> GetRolePermissions(int roleId)
+        public async Task<IEnumerable<int>> GetRolePermissions(int roleId)
         {
-            var list = await dbContext.RolePermissions.Where(r => r.Id == roleId).ToListAsync();
-            int[] permissions = new int[] { };
-            list.ForEach(perms => permissions.Append(perms.PermissionId));
+            var list = await dbContext.RolePermissions.Where(r => r.RoleId == roleId).ToListAsync();
+            List<int> permissions =new List<int>();
+            list.ForEach(perms => permissions.Add(perms.PermissionId));
 
             return permissions;
         }

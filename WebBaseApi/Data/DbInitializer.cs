@@ -13,6 +13,7 @@ namespace WebBaseApi.Data
         public static void Initialize(ApiContext context)
         {
             context.Database.Migrate();
+
             if (context.Users.Any())
             {
                 return;
@@ -39,10 +40,10 @@ namespace WebBaseApi.Data
                 new Permission{Name="后台管理系统",Code="System",Action="", Parent=0,Path="",Property="目录",Description="系统功能根目录",Icon="",Order=1,Status="正常" },
                 new Permission{Name="系统设置",Code="SystemSetting",Action="",Parent=1,Path="",Property="目录",Description="系统设置",Icon="",Order=1,Status="正常" },
                 new Permission{Name="基础设置",Code="BaseSetting",Action="",Parent=1,Path="",Property="目录",Description="基础设置",Icon="",Order=2,Status="正常" },
-                new Permission{Name="部门管理",Code="OrganazitionManager",Action="Read",Parent=2,Path="",Property="菜单",Description="部门管理",Icon="",Order=1,Status="正常" },
-                new Permission{Name="功能管理",Code="PowerManager",Action="Read",Parent=2,Path="",Property="菜单",Description="功能管理",Icon="",Order=2,Status="正常" },
-                new Permission{Name="角色管理",Code="RoleManager",Action="Read",Parent=2,Path="",Property="菜单",Description="角色管理",Icon="",Order=3,Status="正常" },
-                new Permission{Name="人员管理",Code="UserManager",Action="Read",Parent=2,Path="",Property="菜单",Description="人员管理",Icon="",Order=4,Status="正常" }
+                new Permission{Name="部门管理",Code="OrganazitionManager",Action="",Parent=2,Path="",Property="菜单",Description="部门管理",Icon="",Order=1,Status="正常" },
+                new Permission{Name="功能管理",Code="PowerManager",Action="",Parent=2,Path="",Property="菜单",Description="功能管理",Icon="",Order=2,Status="正常" },
+                new Permission{Name="角色管理",Code="RoleManager",Action="",Parent=2,Path="",Property="菜单",Description="角色管理",Icon="",Order=3,Status="正常" },
+                new Permission{Name="人员管理",Code="UserManager",Action="",Parent=2,Path="",Property="菜单",Description="人员管理",Icon="",Order=4,Status="正常" }
             };
             permissions.ForEach(power => context.Add(power));
             context.SaveChanges();
