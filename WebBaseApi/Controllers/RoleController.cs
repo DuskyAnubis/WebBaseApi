@@ -1,19 +1,19 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using WebBaseApi.Models;
 using WebBaseApi.Data;
 using WebBaseApi.Dtos;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
-using System.Linq.Dynamic.Core;
-using Newtonsoft.Json;
 using WebBaseApi.Filters;
-using Microsoft.AspNetCore.JsonPatch;
+using WebBaseApi.Models;
 
 namespace WebBaseApi.Controllers
 {
@@ -81,7 +81,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(RoleOutput), 200)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> GetRole(int id)
+        public async Task<IActionResult> GetRole([FromRoute]int id)
         {
             Role role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id);
             if (role == null)
@@ -100,10 +100,10 @@ namespace WebBaseApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [ValidateModel]
-        [ProducesResponseType(typeof(UserOutput), 201)]
+        [ProducesResponseType(typeof(RoleOutput), 201)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> CreateRole([FromBody] RoleCreateInput input)
+        public async Task<IActionResult> CreateRole([FromBody]RoleCreateInput input)
         {
             Role role = mapper.Map<Role>(input);
 
@@ -126,7 +126,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> UpdateRole(int id, [FromBody]RoleUpdateInput input)
+        public async Task<IActionResult> UpdateRole([FromRoute]int id, [FromBody]RoleUpdateInput input)
         {
             if (input.Id != id)
             {
@@ -157,12 +157,12 @@ namespace WebBaseApi.Controllers
         /// <param name="patchDoc"></param>
         /// <returns></returns>
         [HttpPatch("{id}")]
-        [ProducesResponseType(typeof(void), 201)]
+        [ProducesResponseType(typeof(RoleOutput), 201)]
         [ProducesResponseType(typeof(string), 400)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> PatchRole(int id, [FromBody]JsonPatchDocument patchDoc)
+        public async Task<IActionResult> PatchRole([FromRoute]int id, [FromBody]JsonPatchDocument<RoleUpdateInput> patchDoc)
         {
             if (patchDoc == null)
             {
@@ -205,7 +205,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(void), 400)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> DeleteRole(int id)
+        public async Task<IActionResult> DeleteRole([FromRoute]int id)
         {
             var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id);
             if (role == null)
@@ -234,12 +234,14 @@ namespace WebBaseApi.Controllers
         [HttpDelete]
         [ProducesResponseType(typeof(void), 204)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> BatchDelete([FromBody] int[] ids)
+        public async Task<IActionResult> BatchDelete([FromBody]int[] ids)
         {
             for (int i = 0; i < ids.Length; i++)
             {
                 var role = await dbContext.Roles.FirstOrDefaultAsync(r => r.Id == ids[i]);
-                if (role == null)
+                int userCount = await dbContext.Users.CountAsync(u => u.RoleId == ids[i]);
+                int rolePowerCount = await dbContext.RolePermissions.CountAsync(rp => rp.RoleId == ids[i]);
+                if (role != null && userCount == 0 && rolePowerCount == 0)
                 {
                     dbContext.Roles.Remove(role);
                 }
@@ -259,10 +261,10 @@ namespace WebBaseApi.Controllers
         [HttpGet("~/api/v1/Role/{roleId}/Permissions")]
         [ProducesResponseType(typeof(int[]), 200)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IEnumerable<int>> GetRolePermissions(int roleId)
+        public async Task<IEnumerable<int>> GetRolePermissions([FromRoute]int roleId)
         {
             var list = await dbContext.RolePermissions.Where(r => r.RoleId == roleId).ToListAsync();
-            List<int> permissions =new List<int>();
+            List<int> permissions = new List<int>();
             list.ForEach(perms => permissions.Add(perms.PermissionId));
 
             return permissions;

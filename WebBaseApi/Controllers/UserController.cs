@@ -1,19 +1,19 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using WebBaseApi.Models;
 using WebBaseApi.Data;
 using WebBaseApi.Dtos;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
-using Newtonsoft.Json;
 using WebBaseApi.Filters;
-using Microsoft.AspNetCore.JsonPatch;
-using Microsoft.AspNetCore.Authorization;
+using WebBaseApi.Models;
 
 namespace WebBaseApi.Controllers
 {
@@ -63,7 +63,6 @@ namespace WebBaseApi.Controllers
                 TotalCount = totalCount,
                 TotalPages = totalPages
             };
-
             HttpContext.Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(paginationHeader));
 
             query = query.Skip(pageIndex * Per_Page).Take(Per_Page);
@@ -83,7 +82,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(UserOutput), 200)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> GetUser(int id)
+        public async Task<IActionResult> GetUser([FromRoute]int id)
         {
             User user = await dbContext.Users
                .Include(q => q.Organazition)
@@ -145,7 +144,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateInput input)
+        public async Task<IActionResult> UpdateUser([FromRoute]int id, [FromBody]UserUpdateInput input)
         {
             if (input.Id != id)
             {
@@ -182,12 +181,12 @@ namespace WebBaseApi.Controllers
         /// <param name="patchDoc"></param>
         /// <returns></returns>
         [HttpPatch("{id}")]
-        [ProducesResponseType(typeof(void), 201)]
+        [ProducesResponseType(typeof(UserOutput), 201)]
         [ProducesResponseType(typeof(string), 400)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> PatchUserAsync(int id, [FromBody] JsonPatchDocument<UserUpdateInput> patchDoc)
+        public async Task<IActionResult> PatchUserAsync([FromRoute]int id, [FromBody]JsonPatchDocument<UserUpdateInput> patchDoc)
         {
             if (patchDoc == null)
             {
@@ -237,7 +236,7 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(void), 204)]
         [ProducesResponseType(typeof(string), 404)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser([FromRoute]int id)
         {
             var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
@@ -259,7 +258,7 @@ namespace WebBaseApi.Controllers
         [HttpDelete]
         [ProducesResponseType(typeof(void), 204)]
         [ProducesResponseType(typeof(void), 500)]
-        public async Task<IActionResult> BatchDelete([FromBody] int[] ids)
+        public async Task<IActionResult> BatchDelete([FromBody]int[] ids)
         {
             for (int i = 0; i < ids.Length; i++)
             {
@@ -283,7 +282,7 @@ namespace WebBaseApi.Controllers
         /// <param name="orgId"></param>
         /// <param name="input"></param>
         /// <returns></returns>
-        [HttpGet("~/api/v1/Orgs/{orgId}/Users")]
+        [HttpGet("/api/v1/Orgs/{orgId}/Users")]
         [ProducesResponseType(typeof(List<UserOutput>), 200)]
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IEnumerable<UserOutput>> GetOrgUsers(int orgId, UserQueryInput input)

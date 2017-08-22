@@ -27,6 +27,10 @@ namespace WebBaseApi.AutoMapper
             CreateMap<Role, RoleOutput>();
             CreateMap<RoleCreateInput, Role>();
             CreateMap<Role, RoleUpdateInput>();
+
+            CreateMap<Organazition, OrgOutput>();
+            CreateMap<OrgCreateInput, Organazition>();
+            CreateMap<Organazition, OrgUpdateInput>();
         }
     }
 }

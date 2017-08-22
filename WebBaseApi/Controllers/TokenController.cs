@@ -11,12 +11,13 @@ using System.Security.Claims;
 using System.Security.Principal;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
-
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebBaseApi.Controllers
 {
 
-    [Route("api/v1/[Controller]")]
+    [Route("api/v1/Token")]
     public class TokenController : Controller
     {
         private readonly JWTTokenOptions tokenOptions;
@@ -38,8 +39,7 @@ namespace WebBaseApi.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Jti,jti),
                 new Claim("userId",user.Id.ToString()),
-                new Claim("role",user.Role.Name)
-
+                new Claim("role",user.Role.Code)
             };
             ClaimsIdentity identity = new ClaimsIdentity(new GenericIdentity(user.Name, "TokenAuth"), claims);
 
@@ -53,26 +53,48 @@ namespace WebBaseApi.Controllers
             });
             return token;
         }
+
         /// <summary>
         /// 用户登录，返回一个Token
         /// </summary>
         /// <param name="loginUser">登录信息</param>
         /// <returns>Token</returns>
-        // POST: api/Token
+        // Post: api/Token
         [HttpPost]
-        public IActionResult Post([FromBody]LoginInputDto loginUser)
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> GetToken([FromBody]LoginInputDto loginUser)
         {
-            var user = dbContext.Users
+            var user = await dbContext.Users
                 .Include(u => u.Role)
-                .FirstOrDefault(u => u.Name == loginUser.UserName && u.PassWord == Encrypt.Md5Encrypt(loginUser.PassWord));
+                .FirstOrDefaultAsync(u => u.Name == loginUser.UserName && u.PassWord == Encrypt.Md5Encrypt(loginUser.PassWord));
 
             if (user == null)
             {
-                return Json(new { Error = "用户名或密码错误！" });
+                return NotFound(Json(new { Error = "用户名或密码错误！" }));
             }
             return Json(new { Token = CreatToken(user) });
         }
 
+        /// <summary>
+        /// 刷新Token
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("Refresh")]
+        [Authorize]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> RefreshToken()
+        {
+            var claimsIdentity = User.Identity as ClaimsIdentity;
+            int id = Convert.ToInt32(claimsIdentity.Claims.FirstOrDefault(c => c.Type == "userId").Value);
 
+            User user = await dbContext.Users
+             .Include(q => q.Role)
+             .FirstOrDefaultAsync(u => u.Id == id);
+
+            return Json(new { Token = CreatToken(user) });
+        }
     }
 }

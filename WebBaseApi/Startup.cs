@@ -90,6 +90,7 @@ namespace WebBaseApi
                 ClockSkew = TimeSpan.Zero
             };
 
+            //添加JWT身份验证
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -110,6 +111,9 @@ namespace WebBaseApi
                     }
                 };
             });
+
+            //鉴权规则设置
+
         }
 
 

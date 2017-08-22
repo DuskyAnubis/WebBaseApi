@@ -1,20 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebBaseApi.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using WebBaseApi.Data;
 using WebBaseApi.Dtos;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
-using Newtonsoft.Json;
-using WebBaseApi.Filters;
-using Microsoft.AspNetCore.JsonPatch;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using WebBaseApi.Models;
 
 namespace WebBaseApi.Controllers
 {
