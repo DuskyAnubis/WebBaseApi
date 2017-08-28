@@ -31,6 +31,10 @@ namespace WebBaseApi.AutoMapper
             CreateMap<Organazition, OrgOutput>();
             CreateMap<OrgCreateInput, Organazition>();
             CreateMap<Organazition, OrgUpdateInput>();
+
+            CreateMap<Permission, PermissionOutput>();
+            CreateMap<PermissionCreateInput, Permission>();
+            CreateMap<Permission, PermissionUpdateInput>();
         }
     }
 }
