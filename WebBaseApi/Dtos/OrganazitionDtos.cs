@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebBaseApi.Dtos
 {
@@ -40,5 +41,14 @@ namespace WebBaseApi.Dtos
         public int Parent { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
+    }
+
+    public class OrgTreeOutput
+    {
+        public int Id { get; set; }
+        public string Code { get; set; }
+        public string Name { get; set; }
+
+        public List<OrgTreeOutput> Children { get; set; }
     }
 }

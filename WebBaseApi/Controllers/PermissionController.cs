@@ -282,7 +282,7 @@ namespace WebBaseApi.Controllers
 
         #region 角色权限操作
         /// <summary>
-        /// 角色-权限列表
+        /// 角色-权限ID
         /// </summary>
         /// <param name="roleId"></param>
         /// <returns></returns>
@@ -291,12 +291,88 @@ namespace WebBaseApi.Controllers
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IEnumerable<int>> GetRolePermissions([FromRoute]int roleId)
         {
-            var list = await dbContext.RolePermissions.Where(r => r.RoleId == roleId).ToListAsync();
+            var list = await dbContext.RolePermissions.Where(r => r.RoleId == roleId && r.Permission.Status == "正常").ToListAsync();
             List<int> permissions = new List<int>();
             list.ForEach(perms => permissions.Add(perms.PermissionId));
 
             return permissions;
         }
+
+        /// <summary>
+        /// 角色-权限菜单
+        /// </summary>
+        /// <param name="roleId"></param>
+        /// <param name="permId"></param>
+        /// <returns></returns>
+        [HttpGet("~/api/v1/Role/{roleId}/{permId}/WithMenu/Permissions")]
+        [ProducesResponseType(typeof(List<PermissionMenuOutput>), 200)]
+        [ProducesResponseType(typeof(void), 500)]
+        public IEnumerable<PermissionMenuOutput> GetRolePermissionsMenu([FromRoute]int roleId, [FromRoute]int permId)
+        {
+            var list = dbContext.RolePermissions
+                .Include(r=>r.Permission)
+                .Where(r => r.RoleId == roleId && r.Permission.Parent == permId && r.Permission.Status == "正常")
+                .OrderBy(r => r.Permission.Order)
+                .ToList();
+
+            var permissionMenuOutputList= mapper.Map<List<PermissionMenuOutput>>(list);
+            GenerataMenu(roleId, ref permissionMenuOutputList);
+
+            return permissionMenuOutputList;
+        }
+
+        private void GenerataMenu(int roleId, ref List<PermissionMenuOutput> permissionMenuOutput)
+        {
+            foreach (var item in permissionMenuOutput)
+            {
+                var list = dbContext.RolePermissions
+                    .Include(r => r.Permission)
+                    .Where(r => r.RoleId == roleId && r.Permission.Parent == item.PermissionId && r.Permission.Status == "正常")
+                    .OrderBy(r => r.Permission.Order)
+                    .ToList();
+                var childList = mapper.Map<List<PermissionMenuOutput>>(list);
+                GenerataMenu(roleId, ref childList);
+                item.Children = childList;
+            }
+        }
+        #endregion
+
+        #region 树形菜单
+        /// <summary>
+        /// 获得权限树形
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}/WithTree/Permissions")]
+        [ProducesResponseType(typeof(OrgTreeOutput), 200)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(void), 500)]
+        public IActionResult GetOrgTree([FromRoute]int id)
+        {
+            var permission = dbContext.Permissions.FirstOrDefault(o => o.Id == id && o.Status == "正常");
+            if (permission == null)
+            {
+                return NotFound(Json(new { Error = "该权限不存在" }));
+            }
+            var permissionTreeOut = mapper.Map<PermissionTreeOutput>(permission);
+            GenerateTree(permissionTreeOut.Id, ref permissionTreeOut);
+
+            return Ok(permissionTreeOut);
+        }
+
+        private void GenerateTree(int parentId, ref PermissionTreeOutput permissionTreeOutput)
+        {
+            var list = dbContext.Permissions.Where(o => o.Parent == parentId && o.Status == "正常").OrderBy(o => o.Order).ToList();
+            List<PermissionTreeOutput> childList = new List<PermissionTreeOutput>();
+            foreach (var item in list)
+            {
+                var childNode = mapper.Map<PermissionTreeOutput>(item);
+                GenerateTree(childNode.Id, ref childNode);
+                childList.Add(childNode);
+            }
+            permissionTreeOutput.Children = childList;
+        }
+
         #endregion
     }
 }

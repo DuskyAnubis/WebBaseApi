@@ -19,7 +19,7 @@ namespace WebBaseApi.Controllers
 {
     [Produces("application/json")]
     [Route("api/v1/Orgs")]
-    [Authorize]
+    //[Authorize]
     public class OrganazitionController : Controller
     {
         private readonly ApiContext dbContext;
@@ -290,5 +290,44 @@ namespace WebBaseApi.Controllers
 
             return new NoContentResult();
         }
+
+        #region 树形菜单
+
+        /// <summary>
+        /// 获得树形菜单
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}/WithTree/Orgs")]
+        [ProducesResponseType(typeof(OrgTreeOutput), 200)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(void), 500)]
+        public IActionResult GetOrgTree([FromRoute]int id)
+        {
+            var org = dbContext.Organazitions.FirstOrDefault(o => o.Id == id && o.Status == "正常");
+            if (org == null)
+            {
+                return NotFound(Json(new { Error = "该部门不存在" }));
+            }
+            var orgTreeOut = mapper.Map<OrgTreeOutput>(org);
+            GenerateTree(orgTreeOut.Id, ref orgTreeOut);
+
+            return Ok(orgTreeOut);
+        }
+
+        private void GenerateTree(int parentId, ref OrgTreeOutput orgTreeOutput)
+        {
+            var list = dbContext.Organazitions.Where(o => o.Parent == parentId && o.Status=="正常").ToList();
+            List<OrgTreeOutput> childList = new List<OrgTreeOutput>();
+            foreach (var item in list)
+            {
+                var childNode = mapper.Map<OrgTreeOutput>(item);
+                GenerateTree(childNode.Id, ref childNode);
+                childList.Add(childNode);
+            }
+            orgTreeOutput.Children = childList;
+        }
+
+        #endregion
     }
 }
