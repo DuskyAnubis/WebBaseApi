@@ -252,7 +252,7 @@ namespace WebBaseApi.Controllers
             {
                 return NotFound(Json(new { Error = "该部门不存在" }));
             }
-
+   
             int childCount = dbContext.Organazitions.Count(o => o.Parent == id);
             int userCount = dbContext.Users.Count(u => u.RoleId == id);
             if (childCount != 0 || userCount != 0)

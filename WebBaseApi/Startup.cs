@@ -68,6 +68,19 @@ namespace WebBaseApi
                 options.OperationFilter<HttpHeaderOperation>(); // 添加httpHeader参数
             });
 
+            //配置跨域
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                  builder => builder.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials());
+            });
+
+
+
             //JWT相关
             tokenOptions = new JWTTokenOptions()
             {
@@ -129,6 +142,8 @@ namespace WebBaseApi
             {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "WebBaseApi v1");
             });
+            //使用跨域
+            app.UseCors("CorsPolicy");
 
             app.UseAuthentication();
             app.UseMvc();
