@@ -286,7 +286,7 @@ namespace WebBaseApi.Controllers
         /// </summary>
         /// <param name="roleId"></param>
         /// <returns></returns>
-        [HttpGet("~/api/v1/Role/{roleId}/Permissions")]
+        [HttpGet("~/api/v1/Roles/{roleId}/Permissions")]
         [ProducesResponseType(typeof(int[]), 200)]
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IEnumerable<int>> GetRolePermissions([FromRoute]int roleId)
@@ -304,7 +304,7 @@ namespace WebBaseApi.Controllers
         /// <param name="roleId"></param>
         /// <param name="permId"></param>
         /// <returns></returns>
-        [HttpGet("~/api/v1/Role/{roleId}/{permId}/WithMenu/Permissions")]
+        [HttpGet("~/api/v1/Roles/{roleId}/ParentPerm/{permId}/WithMenu/Permissions")]
         [ProducesResponseType(typeof(List<PermissionMenuOutput>), 200)]
         [ProducesResponseType(typeof(void), 500)]
         public IEnumerable<PermissionMenuOutput> GetRolePermissionsMenu([FromRoute]int roleId, [FromRoute]int permId)
