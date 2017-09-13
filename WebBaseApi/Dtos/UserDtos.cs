@@ -21,6 +21,12 @@ namespace WebBaseApi.Dtos
         public string Status { get; set; }
     }
 
+    public class PassWordInput
+    {
+        public string OldPassWord { get; set; }
+        public string NewPassWord { get; set; }
+    }
+
     public class UserCreateInput
     {
         [Required(ErrorMessage = "请输入用户名")]

@@ -137,7 +137,7 @@ namespace WebBaseApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [ValidateModel]
-        [ProducesResponseType(typeof(Permission), 201)]
+        [ProducesResponseType(typeof(PermissionOutput), 201)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IActionResult> CreatePermission([FromBody]PermissionCreateInput input)
@@ -268,7 +268,7 @@ namespace WebBaseApi.Controllers
             {
                 var permission = await dbContext.Permissions.FirstOrDefaultAsync(o => o.Id == ids[i]);
                 int childCount = dbContext.Permissions.Count(p => p.Parent == ids[i]);
-                int rolePermissionCount = dbContext.RolePermissions.Count(r => r.RoleId == ids[i]);
+                int rolePermissionCount = dbContext.RolePermissions.Count(r => r.PermissionId == ids[i]);
                 if (permission != null && childCount == 0 && rolePermissionCount == 0)
                 {
                     dbContext.Permissions.Remove(permission);

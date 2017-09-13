@@ -138,7 +138,7 @@ namespace WebBaseApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [ValidateModel]
-        [ProducesResponseType(typeof(RoleOutput), 201)]
+        [ProducesResponseType(typeof(OrgOutput), 201)]
         [ProducesResponseType(typeof(ValidationError), 422)]
         [ProducesResponseType(typeof(void), 500)]
         public async Task<IActionResult> CreateOrg([FromBody]OrgCreateInput input)
@@ -254,7 +254,7 @@ namespace WebBaseApi.Controllers
             }
    
             int childCount = dbContext.Organazitions.Count(o => o.Parent == id);
-            int userCount = dbContext.Users.Count(u => u.RoleId == id);
+            int userCount = dbContext.Users.Count(u => u.OrganazitionId == id);
             if (childCount != 0 || userCount != 0)
             {
                 return BadRequest(Json(new { Error = "该部门存在引用，不可删除" }));
@@ -280,7 +280,7 @@ namespace WebBaseApi.Controllers
             {
                 var org = await dbContext.Organazitions.FirstOrDefaultAsync(o => o.Id == ids[i]);
                 int childCount = dbContext.Organazitions.Count(o => o.Parent == ids[i]);
-                int userCount = dbContext.Users.Count(u => u.RoleId == ids[i]);
+                int userCount = dbContext.Users.Count(u => u.OrganazitionId == ids[i]);
                 if (org != null && childCount == 0 && userCount == 0)
                 {
                     dbContext.Organazitions.Remove(org);

@@ -9,7 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using WebBaseApi.Common;
 using WebBaseApi.Data;
 using WebBaseApi.Dtos;
 using WebBaseApi.Filters;
@@ -269,6 +271,72 @@ namespace WebBaseApi.Controllers
                 }
             }
 
+            await dbContext.SaveChangesAsync();
+
+            return new NoContentResult();
+        }
+        #endregion
+
+        #region 修改、重置密码
+        /// <summary>
+        /// 修改密码
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        [HttpPut("/api/v1/PassWord")]
+        [Authorize]
+        [ProducesResponseType(typeof(void), 204)]
+        [ProducesResponseType(typeof(string), 400)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> UpdatePassWord([FromBody]PassWordInput input)
+        {
+            var claimsIdentity = User.Identity as ClaimsIdentity;
+            int id = Convert.ToInt32(claimsIdentity.Claims.FirstOrDefault(c => c.Type == "userId").Value);
+
+            User user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+            {
+                return NotFound(Json(new { Error = "该用户不存在" }));
+            }
+
+            if (!user.PassWord.Equals(Encrypt.Md5Encrypt(input.OldPassWord)))
+            {
+                return BadRequest(Json(new { Error = "原密码错误" }));
+            }
+
+            user.PassWord = Encrypt.Md5Encrypt(input.NewPassWord);
+
+            dbContext.Update(user);
+            await dbContext.SaveChangesAsync();
+
+            return new NoContentResult();
+        }
+
+        /// <summary>
+        /// 重置密码
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="passWord"></param>
+        /// <returns></returns>
+        [HttpPut("/api/v1/Users/{userId}/WithReset/PassWord")]
+        [Authorize(Roles = "admin")]
+        [ProducesResponseType(typeof(void), 204)]
+        [ProducesResponseType(typeof(string), 404)]
+        [ProducesResponseType(typeof(void), 500)]
+        public async Task<IActionResult> ResetPassWord([FromRoute]int userId, [FromBody]string passWord)
+        {
+            User user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return NotFound(Json(new { Error = "该用户不存在" }));
+            }
+
+            user.PassWord = Encrypt.Md5Encrypt(passWord);
+
+            dbContext.Update(user);
             await dbContext.SaveChangesAsync();
 
             return new NoContentResult();
